@@ -1,5 +1,7 @@
 import '../../style/main.css';
 import { GetAuthorizationHeader } from '../../utils/commonApi';
+import 'core-js/stable';
+import 'regenerator-runtime/runtime';
 
 /**
  * 頁面載入處理事件
@@ -8,7 +10,16 @@ import { GetAuthorizationHeader } from '../../utils/commonApi';
 let map;
 
 window.addEventListener('load', () => {
-    //嵌入地圖
+    initialMapData();
+    document.getElementById('searchBtn').addEventListener('click', () => searchEvent());
+    document.getElementById('go-tab').addEventListener('click', () => searchEvent());
+    document.getElementById('back-tab').addEventListener('click', () => searchEvent());
+});
+
+/**
+ * 初始地圖資料
+ */
+const initialMapData = () => {
     const [initialLongitude, initialLatitude] = [25.0107036, 121.5040648];
     map = L.map('map').setView([initialLongitude, initialLatitude], 15);
     L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -19,205 +30,139 @@ window.addEventListener('load', () => {
         zoomOffset: -1,
         accessToken: 'pk.eyJ1Ijoic2FuZHlsZWUiLCJhIjoiY2t3MGR4d2RsMHh4ZzJvbm9wb3dzNG9pbCJ9.kpIV-p6GnIpY0QIVGl0Svg',
     }).addTo(map);
+};
 
-    // 路線名稱
-    let routeName = '';
+/**
+ * 初始查詢按鈕事件
+ * 取得使用者輸入路線欄位資料
+ *
+ * @returns
+ */
+const searchEvent = async () => {
+    const routeName = document.getElementById('routeSearch').value;
+    const isDrivingPositive = document.getElementById('go-tab').getAttribute('aria-selected') === 'true'; // TODO 需改為取得頁面去程按鈕或返程按鈕，判斷為 True or False
+    const busStationList = await getBusStation(routeName, isDrivingPositive);
+    const busDrivingTime = await getBusDriveTime(routeName, isDrivingPositive);
 
-    routeSearch.addEventListener('blur', function(e) {
-        routeName = e.target.value;
-        console.log('routeName', routeName);
+    let renderData = '';
+
+    busStationList.forEach(item => {
+        let timeText = 'timeText';
+        //     backData.forEach(back => {
+        //         back.stops.forEach(stop => {
+        //             if (stop.stopUID === item.StopUID) {
+        //                 busID = back.plateNumb;
+        //                 time = Math.floor(stop.estimateTime / 60);
+        //                 // console.log(busID, time)
+        //                 // 文字顯示
+        //                 if (time === 0) {
+        //                     timeText = '進站中';
+        //                 } else if (time <= 1 && 0 < time) {
+        //                     timeText = '即將到站';
+        //                 } else if (!time) {
+        //                     timeText = '--';
+        //                 } else {
+        //                     timeText = `${time} 分鐘`;
+        //                 }
+        //             }
+        //         });
+        //     });
+        renderData += `<li class="list-group-item d-flex align-items-center ">
+                        <div class="d-flex">
+                        <p class="timeColor border rounded-pill px-2 me-2 mb-0 bg-light">${timeText}</p>
+                        <h5 class="fs-6 mb-0">${item.StopName.Zh_tw}</h5>
+                        </div>
+                    </li>
+            `;
     });
+    renderListData(renderData, isDrivingPositive);
+};
 
-    // get 公車預估到站資料
-    let busData = [];
-    let goData = [];
-    let backData = [];
-    const searchBtn = document.querySelector('#searchBtn');
+/**
+ * 取得公車去程與返程的站名排序
+ *
+ * @param {*} routeName
+ * @param {*} isPositive
+ * @returns
+ */
+const getBusStation = (routeName, isPositive = true) => {
+    return new Promise((resolve, reject) => {
+        axios({
+            method: 'get',
+            url: `https://ptx.transportdata.tw/MOTC/v2/Bus/StopOfRoute/City/Taichung/${routeName}`,
+            headers: GetAuthorizationHeader(),
+        })
+            .then(response => {
+                const backData = response.data;
+                const routeData = backData.filter(item => item.RouteID === routeName);
+                const busDirectionIndex = isPositive ? 0 : 1;
+                resolve(routeData[busDirectionIndex].Stops);
+            })
+            .catch(error => reject(error));
+    });
+};
 
-    function getBus() {
+/**
+ * 取得公車預估進站時間
+ *
+ * @param {*} routeName
+ * @param {*} isPositive
+ * @returns
+ */
+const getBusDriveTime = (routeName, isPositive = true) => {
+    return new Promise((resolve, reject) => {
         axios({
             method: 'get',
             url: `https://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taichung/${routeName}`,
             headers: GetAuthorizationHeader(),
         })
             .then(response => {
-                console.log('預估', response);
-                const data = response.data;
-                console.log('回傳資料', response.data);
-
                 // 篩出有在跑的公車
-                const bus = data.filter(item => item.PlateNumb);
-
-                //「去程0」與「返程1」
-                const getGoData = bus.filter(item => !item.Direction);
-                const getBackData = bus.filter(item => item.Direction);
-
-                console.log('getGoData', getGoData);
-                console.log('getBackData', getBackData);
+                const bus = response.data.filter(item => item.PlateNumb);
+                const busPositiveData = bus.filter(item => !item.Direction);
+                const busBackData = bus.filter(item => item.Direction);
+                const result = isPositive ? busPositiveData : busBackData;
+                resolve(result);
 
                 // 組出返程資料格式
-                getBackData.forEach(item => {
-                    const index = backData.map(item => item.plateNumb).indexOf(item.PlateNumb);
-
-                    if (index === -1) {
-                        // 代表沒找到
-                        backData.push({
-                            plateNumb: item.PlateNumb, //車牌號碼
-                            stops: [
-                                {
-                                    estimateTime: item.EstimateTime, //到站時間預估(秒)
-                                    stopUID: item.StopUID, //站牌唯一識別代碼
-                                },
-                            ],
-                        });
-                    } else {
-                        // 有找到
-                        backData[index].stops.push({
-                            estimateTime: item.EstimateTime, //到站時間預估(秒)
-                            stopUID: item.StopUID, //站牌唯一識別代碼
-                        });
-                    }
+                busBackData.forEach(item => {
+                    // const index = backData.map(item => item.plateNumb).indexOf(item.PlateNumb);
+                    // if (index === -1) {
+                    //     // 代表沒找到
+                    //     backData.push({
+                    //         plateNumb: item.PlateNumb, //車牌號碼
+                    //         stops: [
+                    //             {
+                    //                 estimateTime: item.EstimateTime, //到站時間預估(秒)
+                    //                 stopUID: item.StopUID, //站牌唯一識別代碼
+                    //             },
+                    //         ],
+                    //     });
+                    // } else {
+                    //     // 有找到
+                    //     backData[index].stops.push({
+                    //         estimateTime: item.EstimateTime, //到站時間預估(秒)
+                    //         stopUID: item.StopUID, //站牌唯一識別代碼
+                    //     });
+                    // }
                 });
-                console.log('backData', backData);
-                getBackRoute();
-
-                // 組出去程資料格式
-                getGoData.forEach(item => {
-                    const index = goData.map(item => item.plateNumb).indexOf(item.PlateNumb);
-
-                    if (index === -1) {
-                        goData.push({
-                            plateNumb: item.PlateNumb,
-                            stops: [
-                                {
-                                    estimateTime: item.EstimateTime,
-                                    stopUID: item.StopUID,
-                                },
-                            ],
-                        });
-                    } else {
-                        goData[index].stops.push({
-                            estimateTime: item.EstimateTime,
-                            stopUID: item.StopUID,
-                        });
-                    }
-                });
-                console.log('goData', goData);
-                getGoRoute();
+                // console.log('backData', backData);
+                // getBackRoute();
             })
-            .catch(error => console.log('error', error));
-    }
+            .catch(error => reject('error', error));
+    });
+};
 
-    searchBtn.addEventListener('click', getBus);
-
-    // get 公車路線站序資料
-    const goList = document.querySelector('#goList');
-    const backList = document.querySelector('#backList');
-
-    function getBackRoute() {
-        axios({
-            method: 'get',
-            url: `https://ptx.transportdata.tw/MOTC/v2/Bus/StopOfRoute/City/Taichung/${routeName}`,
-            headers: GetAuthorizationHeader(),
-        })
-            .then(response => {
-                console.log('返程列表', response);
-                const data = response.data;
-
-                const routeData = data.filter(item => item.RouteID === routeName);
-
-                // 返程
-                let backStr = '';
-                let busID = '';
-                let time = 0;
-                let timeText = '';
-
-                routeData[1].Stops.forEach(item => {
-                    backData.forEach(back => {
-                        back.stops.forEach(stop => {
-                            if (stop.stopUID === item.StopUID) {
-                                busID = back.plateNumb;
-                                time = Math.floor(stop.estimateTime / 60);
-                                // console.log(busID, time)
-
-                                // 文字顯示
-                                if (time === 0) {
-                                    timeText = '進站中';
-                                } else if (time <= 1 && 0 < time) {
-                                    timeText = '即將到站';
-                                } else if (!time) {
-                                    timeText = '--';
-                                } else {
-                                    timeText = `${time} 分鐘`;
-                                }
-                            }
-                        });
-                    });
-                    backStr += `<li class="list-group-item d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center ">
-                <p class="timeColor border rounded-pill px-2 me-2 mb-0 bg-light">${timeText}</p>
-                <h5 class="fs-6 mb-0">${item.StopUID}/${item.StopName.Zh_tw}</h5>
-                </div>
-                <p class="mb-0 text-primary">${busID}</p>
-            </li>
-        `;
-                });
-                backList.innerHTML = backStr;
-            })
-            .catch(error => console.log('error', error));
-    }
-
-    function getGoRoute() {
-        axios({
-            method: 'get',
-            url: `https://ptx.transportdata.tw/MOTC/v2/Bus/StopOfRoute/City/Taichung/${routeName}`,
-            headers: GetAuthorizationHeader(),
-        })
-            .then(response => {
-                console.log('去程列表', response);
-                const data = response.data;
-
-                const routeData = data.filter(item => item.RouteID === routeName);
-
-                // 返程
-                let goStr = '';
-                let busID = '';
-                let time = 0;
-                let timeText = '';
-
-                routeData[1].Stops.forEach(item => {
-                    goData.forEach(go => {
-                        go.stops.forEach(stop => {
-                            if (stop.stopUID === item.StopUID) {
-                                busID = go.plateNumb;
-                                time = Math.floor(stop.estimateTime / 60);
-                                // console.log(busID, time)
-
-                                // 文字顯示
-                                if (time === 0) {
-                                    timeText = '進站中';
-                                } else if (time <= 1 && 0 < time) {
-                                    timeText = '即將到站';
-                                } else if (!time) {
-                                    timeText = '--';
-                                } else {
-                                    timeText = `${time} 分鐘`;
-                                }
-                            }
-                        });
-                    });
-                    goStr += `<li class="list-group-item d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center ">
-                <p class="timeColor border rounded-pill px-2 me-2 mb-0 bg-light">${timeText}</p>
-                <h5 class="fs-6 mb-0">${item.StopUID}/${item.StopName.Zh_tw}</h5>
-                </div>
-                <p class="mb-0 text-primary">${busID}</p>
-            </li>
-        `;
-                });
-                goList.innerHTML = goStr;
-            })
-            .catch(error => console.log('error', error));
-    }
-    //分頁
-});
+/**
+ * 渲染列表資料
+ *
+ * @param {*} renderData
+ * @param {*} isPositive
+ */
+const renderListData = (renderData, isPositive = true) => {
+    document.getElementById('goList').innerHTML = '';
+    document.getElementById('backList').innerHTML = '';
+    isPositive
+        ? (document.getElementById('goList').innerHTML = renderData)
+        : (document.getElementById('backList').innerHTML = renderData);
+};

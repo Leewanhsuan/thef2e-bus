@@ -44,7 +44,7 @@
             </nav>
             <div class="listdiv">
                 <div class="searchGroup">
-                    <form class="d-flex">
+                    <form class="d-flex" id="searchBus">
                         <input
                             id="routeSearch"
                             class="form-control me-2"
@@ -88,12 +88,15 @@
                         </li>
                     </ul>
                     <div class="tab-content" id="myTabContent">
-                        <div class="tab-pane fade show active" id="goList" role="tabpanel" aria-labelledby="go-tab">
-                            我是去程列表
+                        <div class="listDiv">
+                            <div
+                                class="tab-pane fade show active"
+                                id="goList"
+                                role="tabpanel"
+                                aria-labelledby="go-tab"
+                            ></div>
                         </div>
-                        <div class="tab-pane fade" id="backList" role="tabpanel" aria-labelledby="back-tab">
-                            我是返程列表
-                        </div>
+                        <div class="tab-pane fade" id="backList" role="tabpanel" aria-labelledby="back-tab"></div>
                     </div>
                 </div>
             </div>
