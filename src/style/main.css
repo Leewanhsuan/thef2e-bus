@@ -1,0 +1,558 @@
+#map {
+    height: 1000px;
+    width: 70%;
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    display: block;
+    z-index: 0;
+    overflow-y: hidden;
+}
+
+@media screen and (max-width: 480px) {
+    #map {
+        height: 1000px;
+        width: 100%;
+        position: fixed;
+        top: -120px;
+        right: 0px;
+        display: block;
+        z-index: 0;
+        overflow-y: hidden;
+    }
+}
+
+body {
+    font-family: 'Noto Sans TC', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 100%;
+    height: auto;
+    position: static;
+}
+
+/* 主要資料區 */
+
+.leaflet-control {
+    position: absolute;
+    left: 880px;
+    top: 10px;
+}
+
+.sideBar {
+    height: 1000px;
+    width: 30%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    display: block;
+    z-index: 3;
+}
+
+@media screen and (max-width: 480px) {
+    .sideBar {
+        height: 1000px;
+        width: 100%;
+        position: absolute;
+        top: 10px;
+        left: 0px;
+        display: block;
+        z-index: 3;
+    }
+}
+
+/* logo 區域 */
+
+.logoBox {
+    position: fixed;
+    width: 25%;
+    height: 56px;
+    left: 36px;
+    top: 0px;
+    z-index: 4;
+    background: #ffffff;
+    box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
+    border-radius: 0px 0px 9px 9px;
+    margin: auto 0;
+}
+
+@media screen and (max-width: 480px) {
+    .logoBox {
+        position: fixed;
+        width: 100%;
+        height: 70px;
+        left: 0px;
+        top: 0px;
+        z-index: 4;
+        background: #ffffff;
+        box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
+        border-radius: 0px;
+    }
+}
+
+.logoBox-logo {
+    width: 48.12px;
+    height: 48px;
+    position: absolute;
+    left: 15%;
+    top: 5px;
+}
+
+@media screen and (max-width: 480px) {
+    .logoBox-logo {
+        width: 48.12px;
+        height: 48px;
+        position: absolute;
+        left: 10%;
+        top: 10px;
+    }
+}
+
+.title1 {
+    font-style: normal;
+    font-weight: bold;
+    font-size: 28px;
+    line-height: 125%;
+    display: flex;
+    align-items: flex-end;
+    color: #2d2d2d;
+    position: absolute;
+    left: 30%;
+    top: 10px;
+}
+
+@media screen and (max-width: 480px) {
+    .title1 {
+        font-style: normal;
+        font-weight: bold;
+        font-size: 28px;
+        line-height: 125%;
+        display: flex;
+        align-items: flex-end;
+        color: #2d2d2d;
+        position: absolute;
+        left: 25%;
+        top: 15px;
+    }
+}
+
+.title2 {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 140%;
+    display: flex;
+    align-items: flex-end;
+    color: #2d2d2d;
+    position: absolute;
+    left: 48%;
+    top: 25px;
+}
+
+@media screen and (max-width: 480px) {
+    .title2 {
+        font-style: normal;
+        font-weight: normal;
+        font-size: 16px;
+        line-height: 140%;
+        display: flex;
+        align-items: flex-end;
+        color: #2d2d2d;
+        position: absolute;
+        left: 42%;
+        top: 25px;
+    }
+}
+
+/* 篩選區域 */
+
+.select-group {
+    font-style: 'Noto Sans TC';
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    top: 80px;
+    left: 7%;
+    margin: auto 0;
+}
+
+.form-select-city {
+    align-items: center;
+    padding: 12px 16px;
+    position: relative;
+    width: 35%;
+    height: 48px;
+    background: #ffffff;
+    box-shadow: 0px 3px 8px rgba(75, 75, 75, 0.3);
+    border-radius: 27px;
+    border: 0px;
+}
+
+.form-select {
+    align-items: center;
+    padding: 12px 16px;
+    position: relative;
+    width: 45%;
+    height: 48px;
+    left: 5%;
+    background: #ffffff;
+    box-shadow: 0px 3px 8px rgba(75, 75, 75, 0.3);
+    border-radius: 27px;
+    border: 0px;
+}
+
+/* 右下定位按鈕 */
+
+#testClick {
+    position: absolute;
+    right: 5%;
+    bottom: 5%;
+    width: 64px;
+    height: 64px;
+    background: #686ffc;
+    box-shadow: 0px 2px 10px rgba(52, 57, 181, 0.36);
+    border-radius: 50px;
+    border: 0px;
+    z-index: 3;
+    position: fixed;
+}
+
+@media screen and (max-width: 480px) {
+    #testClick {
+        position: fixed;
+        right: 10%;
+        bottom: 10%;
+        width: 50px;
+        height: 50px;
+        background: #686ffc;
+        box-shadow: 0px 2px 10px rgba(52, 57, 181, 0.36);
+        border-radius: 50px;
+        border: 0px;
+        z-index: 3;
+    }
+}
+
+.myMOUSE:hover {
+    cursor: pointer;
+}
+
+.fa-location-arrow {
+    color: white;
+}
+
+/* 點擊 marker 展開卡片 */
+
+.leaflet-popup-content-wrapper {
+    background-color: #e0e2fe;
+}
+
+.leaflet-popup-tip {
+    background: #e0e2fe;
+}
+
+.bike-card {
+    width: 200px;
+    height: 200px;
+}
+
+.card-subtitle {
+    margin: 0;
+    padding-top: 5px;
+    color: #3439b5;
+}
+
+.card-title {
+    color: #131678;
+}
+
+.card-text {
+    font-size: 16px;
+    padding-top: 210px;
+}
+
+.bike-numbers {
+    font-size: 24px;
+    color: #131678;
+    padding-left: 50px;
+    padding-top: 50px;
+}
+
+.fa-sign-out-alt {
+    color: #131678;
+    padding-right: 10px;
+    padding-top: 10px;
+    font-size: 20px;
+}
+
+.fa-sign-in-alt {
+    color: #131678;
+    padding-right: 10px;
+    padding-top: 10px;
+    font-size: 20px;
+}
+
+/* 左側 route-card */
+
+.route-cards {
+    width: 80%;
+    position: absolute;
+    top: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.route-card {
+    width: 100%;
+    height: 150px;
+    background: #eafbd3;
+    box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
+    border-radius: 9px;
+    position: relative;
+    top: 20px;
+    left: 15px;
+    padding-top: 20px;
+}
+
+.route-title {
+    position: absolute;
+    left: 25px;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 140%;
+    color: #0d5706;
+}
+
+.route-length {
+    position: absolute;
+    left: 25px;
+    top: 50px;
+    color: #0d5706;
+    font-size: 16px;
+    padding-top: 10px;
+}
+
+.routeS2E {
+    width: 90%;
+    height: 60px;
+    background: #ffffff;
+    position: absolute;
+    bottom: 10px;
+    left: 20px;
+}
+
+.routeStart {
+    position: absolute;
+    bottom: 10px;
+    width: 130px;
+    top: 10px;
+    left: 10px;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 140%;
+}
+
+.routeStartPlace {
+    font-size: 12px;
+}
+
+.routeEndPlace {
+    font-size: 12px;
+}
+
+.routeEnd {
+    position: absolute;
+    top: 10px;
+    left: 150px;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 140%;
+    width: 130px;
+}
+
+.cyclingLength {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+/* 左側 station-card */
+
+#cards-div {
+    width: 100%;
+    position: absolute;
+    left: 0px;
+    top: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+@media screen and (max-width: 480px) {
+    #cards-div {
+        width: 100%;
+        position: absolute;
+        left: 0px;
+        top: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* #station-cards {
+    width: 80%;
+    position: absolute;
+    left: 30px;
+    top: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+} */
+
+#route-cards {
+    width: 80%;
+    position: absolute;
+    left: 30px;
+    top: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* 美食卡片 */
+
+#food-cards {
+    width: 80%;
+    position: absolute;
+    left: 30px;
+    top: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#food-card {
+    width: 100%;
+    height: 330px;
+    background: #fff9cc;
+    box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
+    border-radius: 9px;
+    position: relative;
+    top: 20px;
+    left: 15px;
+    margin-top: 20px;
+}
+
+.food-image {
+    width: 96%;
+    aspect-ratio: 370 / 162;
+    position: absolute;
+    left: 2%;
+    top: 0px;
+    border-radius: 9px;
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+    margin: 8px 0px;
+    object-fit: cover;
+}
+
+.food-title {
+    position: absolute;
+    top: 170px;
+    left: 25px;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 140%;
+    color: #854b05;
+}
+
+.food-address {
+    position: absolute;
+    left: 25px;
+    top: 200px;
+    font-size: 14px;
+    padding-top: 10px;
+    margin-right: 10px;
+}
+
+.food-phone {
+    position: absolute;
+    left: 25px;
+    top: 230px;
+    font-size: 14px;
+    padding-top: 10px;
+}
+
+.food-openTime {
+    position: absolute;
+    left: 25px;
+    top: 260px;
+    font-size: 14px;
+    padding-top: 10px;
+}
+
+.fa-map-pin {
+    margin-left: 5px;
+    color: #854b05;
+    font-size: 16px;
+}
+.fa-map-pin:hover {
+    font-size: 22px;
+    color: #f68300;
+}
+
+.fa-phone {
+    margin-left: 5px;
+    font-size: 14px;
+    color: #854b05;
+}
+
+.fa-phone:hover {
+    font-size: 20px;
+    color: #f68300;
+}
+
+/* 美食沙漠提醒 */
+
+#noFood {
+    font-size: 18px;
+    position: absolute;
+    top: 220px;
+    left: 10%;
+    color: #131678;
+}
+
+@media screen and (max-width: 480px) {
+    #noFood {
+        display: none;
+    }
+}
+
+.footer {
+    width: 30%;
+    position: fixed;
+    bottom: 0px;
+    font-size: 12px;
+    color: #e0e2fe;
+    text-align: center;
+}
+
+@media screen and (max-width: 480px) {
+    .footer {
+        width: 100%;
+        position: fixed;
+        bottom: 20px;
+        font-size: 10px;
+        color: #131678;
+        text-align: center;
+    }
+}
