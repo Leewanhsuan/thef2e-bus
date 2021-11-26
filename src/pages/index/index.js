@@ -43,6 +43,8 @@ const initialMapData = () => {
 const searchEvent = async () => {
     const routeName = document.getElementById('routeSearch').value;
     const isDrivingPositive = document.getElementById('go-tab').getAttribute('aria-selected') === 'true';
+    document.getElementById('goList').style.zIndex = isDrivingPositive ? '1' : '-1';
+    document.getElementById('backList').style.zIndex = !isDrivingPositive ? '1' : '-1';
     const busStationList = await getBusStation(routeName, isDrivingPositive); //RouteAPI StopUID
     const busDrivingTime = await getBusDriveTime(routeName, isDrivingPositive); //TimeAPI PlateNumb
     console.log(busDrivingTime, 'busDrivingTime');
@@ -82,8 +84,9 @@ const searchEvent = async () => {
                         </div>
                     </li>
             `;
-        renderBusRoute(busStationList);
     });
+    renderMarker(busStationList);
+    // renderBusRoute(busStationList);
     renderListData(renderData, isDrivingPositive);
     renderLastStop += `<span>往${busStationList.pop().StopName.Zh_tw}</span>`;
     renderLastStopData(renderLastStop, isDrivingPositive);
@@ -194,19 +197,26 @@ const renderLastStopData = (renderLastStop, isPositive = true) => {
 /*
  * 取得公車站牌經緯度
  */
-const renderBusRoute = busStationList => {
+const renderMarker = busStationList => {
     busStationList.forEach(item => {
         const [latitude, longitude] = [item.StopPosition.PositionLat, item.StopPosition.PositionLon];
-        // const longitude = item.StopPosition.PositionLon;
-        // const latitude = item.StopPosition.PositionLat;
-        console.log(longitude, '車站經度');
-        console.log(latitude, '車站緯度');
-        const geo = [latitude, longitude] + ',';
-        console.log(geo, 'geo');
-        polyLine(geo);
         setMarker({ latitude: latitude, longitude: longitude });
     });
 };
+
+/*
+ * 設定公車路線
+ */
+const renderBusRoute = busStationList => {
+    let geometryTitle = 'MULTILINESTRING ((';
+    busStationList.forEach((item, index) => {
+        const [latitude, longitude] = [item.StopPosition.PositionLat, item.StopPosition.PositionLon];
+        index === 0 ? (geometryTitle += `${latitude} ${longitude}`) : (geometryTitle += `,${latitude} ${longitude}`);
+    });
+    geometryTitle += '))';
+    polyLine(geometryTitle);
+};
+
 /*
  * 標記公車站牌
  */
@@ -223,10 +233,11 @@ const setMarker = ({ latitude, longitude }) => {
 /**
  * 畫出公車路線
  */
-const polyLine = geo => {
+const polyLine = geometryTitle => {
     // 建立一個 wkt 的實體
     const wicket = new Wkt.Wkt();
-    const geojsonFeature = wicket.read(geo).toJson();
+    const geojsonFeature = wicket.read(geometryTitle).toJson();
+    console.log(geojsonFeature, 'geojsonFeature');
 
     // 畫線的style
     const myStyle = {
