@@ -82,7 +82,7 @@ const searchEvent = async () => {
             `;
     });
     renderListData(renderData, isDrivingPositive);
-    renderLastStop += `<span>往<span class="lastStopName">${busStationList.pop().StopName.Zh_tw}</span></span>`;
+    renderLastStop += `<span>往${busStationList.pop().StopName.Zh_tw}</span>`;
     renderLastStopData(renderLastStop, isDrivingPositive);
 };
 
@@ -105,6 +105,7 @@ const getBusStation = (routeName, isPositive = true) => {
                 const routeData = backData.filter(item => item.RouteID === routeName);
                 const busDirectionIndex = isPositive ? 0 : 1;
                 resolve(routeData[busDirectionIndex].Stops);
+                renderBusRoute(routeName, value);
             })
             .catch(error => reject(error));
     });
@@ -185,4 +186,15 @@ const renderLastStopData = (renderLastStop, isPositive = true) => {
     isPositive
         ? (document.getElementById('go-tab').innerHTML = renderLastStop)
         : (document.getElementById('back-tab').innerHTML = renderLastStop);
+};
+
+/*
+ * 公車路線畫線
+ */
+const renderBusRoute = routeName => {
+    routeName.forEach(item => {
+        const geo = item.StopPosition;
+        console.group(item.StopPosition, 'StopPosition');
+        // polyLine(geo);
+    });
 };
