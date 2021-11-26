@@ -156,6 +156,10 @@ body {
     overflow-y: hidden;
 }
 
+.leaflet-marker-icon {
+    width: 20px;
+}
+
 .footer {
     position: fixed;
     bottom: 0px;

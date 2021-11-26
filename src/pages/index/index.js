@@ -2,12 +2,14 @@ import '../../style/main.css';
 import { GetAuthorizationHeader } from '../../utils/commonApi';
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
+// import { set } from 'core-js/core/dict';
 
 /**
  * 頁面載入處理事件
  */
 
 let map;
+const markers = [];
 
 window.addEventListener('load', () => {
     initialMapData();
@@ -20,7 +22,7 @@ window.addEventListener('load', () => {
  * 初始地圖資料
  */
 const initialMapData = () => {
-    const [initialLongitude, initialLatitude] = [25.0107036, 121.5040648];
+    const [initialLongitude, initialLatitude] = [24.1661896, 120.6356677];
     map = L.map('map').setView([initialLongitude, initialLatitude], 15);
     L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
         attribution: `Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>`,
@@ -80,6 +82,7 @@ const searchEvent = async () => {
                         </div>
                     </li>
             `;
+        renderBusRoute(busStationList);
     });
     renderListData(renderData, isDrivingPositive);
     renderLastStop += `<span>往${busStationList.pop().StopName.Zh_tw}</span>`;
@@ -101,11 +104,11 @@ const getBusStation = (routeName, isPositive = true) => {
             headers: GetAuthorizationHeader(),
         })
             .then(response => {
+                clearAllMarker();
                 const backData = response.data;
                 const routeData = backData.filter(item => item.RouteID === routeName);
                 const busDirectionIndex = isPositive ? 0 : 1;
                 resolve(routeData[busDirectionIndex].Stops);
-                renderBusRoute(routeName, value);
             })
             .catch(error => reject(error));
     });
@@ -189,12 +192,62 @@ const renderLastStopData = (renderLastStop, isPositive = true) => {
 };
 
 /*
- * 公車路線畫線
+ * 取得公車站牌經緯度
  */
-const renderBusRoute = routeName => {
-    routeName.forEach(item => {
-        const geo = item.StopPosition;
-        console.group(item.StopPosition, 'StopPosition');
-        // polyLine(geo);
+const renderBusRoute = busStationList => {
+    busStationList.forEach(item => {
+        const [latitude, longitude] = [item.StopPosition.PositionLat, item.StopPosition.PositionLon];
+        // const longitude = item.StopPosition.PositionLon;
+        // const latitude = item.StopPosition.PositionLat;
+        console.log(longitude, '車站經度');
+        console.log(latitude, '車站緯度');
+        const geo = [latitude, longitude] + ',';
+        console.log(geo, 'geo');
+        polyLine(geo);
+        setMarker({ latitude: latitude, longitude: longitude });
+    });
+};
+/*
+ * 標記公車站牌
+ */
+
+const setMarker = ({ latitude, longitude }) => {
+    const myIcon = L.icon({
+        iconUrl: 'src/image/placeholder.png',
+    });
+    const marker = L.marker([latitude, longitude], { icon: myIcon }).addTo(map);
+    // .bindPopup(message);
+    markers.push(marker);
+};
+
+/**
+ * 畫出公車路線
+ */
+const polyLine = geo => {
+    // 建立一個 wkt 的實體
+    const wicket = new Wkt.Wkt();
+    const geojsonFeature = wicket.read(geo).toJson();
+
+    // 畫線的style
+    const myStyle = {
+        color: '#55B724',
+        weight: 5,
+        opacity: 0.65,
+    };
+    const mapLayer = L.geoJSON(geojsonFeature, {
+        style: myStyle,
+    }).addTo(map);
+
+    mapLayer.addData(geojsonFeature);
+    // zoom the map to the layer
+    map.fitBounds(mapLayer.getBounds());
+};
+
+/**
+ * 清除所有標記點
+ */
+const clearAllMarker = () => {
+    markers.map(item => {
+        map.removeLayer(item);
     });
 };
