@@ -10,6 +10,7 @@ import 'regenerator-runtime/runtime';
 
 let map;
 const markers = [];
+const routers = [];
 
 window.addEventListener('load', () => {
     initialMapData();
@@ -86,7 +87,7 @@ const searchEvent = async () => {
             `;
     });
     renderMarker(busStationList);
-    // renderBusRoute(busStationList);
+    renderBusRoute(busStationList);
     renderListData(renderData, isDrivingPositive);
     renderLastStop += `<span>往${busStationList.pop().StopName.Zh_tw}</span>`;
     renderLastStopData(renderLastStop, isDrivingPositive);
@@ -108,6 +109,7 @@ const getBusStation = (routeName, isPositive = true) => {
         })
             .then(response => {
                 clearAllMarker();
+                clearAllLine();
                 const backData = response.data;
                 const routeData = backData.filter(item => item.RouteID === routeName);
                 const busDirectionIndex = isPositive ? 0 : 1;
@@ -211,10 +213,11 @@ const renderBusRoute = busStationList => {
     let geometryTitle = 'MULTILINESTRING ((';
     busStationList.forEach((item, index) => {
         const [latitude, longitude] = [item.StopPosition.PositionLat, item.StopPosition.PositionLon];
-        index === 0 ? (geometryTitle += `${latitude} ${longitude}`) : (geometryTitle += `,${latitude} ${longitude}`);
+        index === 0 ? (geometryTitle += `${longitude} ${latitude}`) : (geometryTitle += `,${longitude} ${latitude}`);
     });
     geometryTitle += '))';
     polyLine(geometryTitle);
+    console.log(geometryTitle);
 };
 
 /*
@@ -228,6 +231,7 @@ const setMarker = ({ latitude, longitude }) => {
     const marker = L.marker([latitude, longitude], { icon: myIcon }).addTo(map);
     // .bindPopup(message);
     markers.push(marker);
+    // console.log(markers, 'markers');
 };
 
 /**
@@ -241,16 +245,15 @@ const polyLine = geometryTitle => {
 
     // 畫線的style
     const myStyle = {
-        color: '#55B724',
+        color: '#1b4277',
         weight: 5,
         opacity: 0.65,
     };
     const mapLayer = L.geoJSON(geojsonFeature, {
         style: myStyle,
     }).addTo(map);
-
+    routers.push(mapLayer);
     mapLayer.addData(geojsonFeature);
-    // zoom the map to the layer
     map.fitBounds(mapLayer.getBounds());
 };
 
@@ -259,6 +262,15 @@ const polyLine = geometryTitle => {
  */
 const clearAllMarker = () => {
     markers.map(item => {
+        map.removeLayer(item);
+    });
+};
+
+/**
+ * 清除路線
+ */
+const clearAllLine = () => {
+    routers.map(item => {
         map.removeLayer(item);
     });
 };
