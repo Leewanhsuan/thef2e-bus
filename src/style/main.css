@@ -91,12 +91,6 @@ body {
     left: 5%;
 }
 
-.nav-pills .nav-link.active,
-.nav-pills .show > .nav-link {
-    color: #fff;
-    background-color: #f5c344;
-}
-
 .nav-link {
     color: #f5c344;
 }
@@ -126,6 +120,29 @@ body {
 
 .nav-item {
     width: 100%;
+}
+
+#back-tab {
+    height: 50px;
+}
+
+#back-tab:hover {
+    background-color: #f5c344;
+    color: #ffffff;
+}
+
+#go-tab {
+    height: 50px;
+}
+
+#go-tab:hover {
+    background-color: #f5c344;
+    color: #ffffff;
+}
+
+#searchBus {
+    position: relative;
+    left: 5%;
 }
 
 #map {

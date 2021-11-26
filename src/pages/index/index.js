@@ -40,33 +40,39 @@ const initialMapData = () => {
  */
 const searchEvent = async () => {
     const routeName = document.getElementById('routeSearch').value;
-    const isDrivingPositive = document.getElementById('go-tab').getAttribute('aria-selected') === 'true'; // TODO 需改為取得頁面去程按鈕或返程按鈕，判斷為 True or False
-    const busStationList = await getBusStation(routeName, isDrivingPositive);
-    const busDrivingTime = await getBusDriveTime(routeName, isDrivingPositive);
+    const isDrivingPositive = document.getElementById('go-tab').getAttribute('aria-selected') === 'true';
+    const busStationList = await getBusStation(routeName, isDrivingPositive); //RouteAPI StopUID
+    const busDrivingTime = await getBusDriveTime(routeName, isDrivingPositive); //TimeAPI PlateNumb
+    console.log(busDrivingTime, 'busDrivingTime');
+    console.log(busStationList, 'busStationList');
+    console.log(busStationList.pop(), '取最後一站');
 
     let renderData = '';
-
+    let renderLastStop = '';
+    let timeText = '';
     busStationList.forEach(item => {
-        let timeText = 'timeText';
-        //     backData.forEach(back => {
-        //         back.stops.forEach(stop => {
-        //             if (stop.stopUID === item.StopUID) {
-        //                 busID = back.plateNumb;
-        //                 time = Math.floor(stop.estimateTime / 60);
-        //                 // console.log(busID, time)
-        //                 // 文字顯示
-        //                 if (time === 0) {
-        //                     timeText = '進站中';
-        //                 } else if (time <= 1 && 0 < time) {
-        //                     timeText = '即將到站';
-        //                 } else if (!time) {
-        //                     timeText = '--';
-        //                 } else {
-        //                     timeText = `${time} 分鐘`;
-        //                 }
+        // console.log(item, 'item');
+        // busDrivingTime.forEach(back => {
+        //     console.log(back, 'back');
+        //     Object.entries(back).forEach(stop => {
+        //         console.log(stop, 'stop');
+        //         if (stop.StopUID === item.StopUID) {
+        //             const busID = back.PlateNumb;
+        //             console.log(stop.EstimateTime, 'stopTime');
+        //             const time = Math.floor(stop.EstimateTime / 60);
+        //             console.log(busID, time, '公車車牌與時間');
+        //             if (time === 0) {
+        //                 timeText = '進站中';
+        //             } else if (time <= 1 && 0 < time) {
+        //                 timeText = '即將到站';
+        //             } else if (!time) {
+        //                 timeText = '--';
+        //             } else {
+        //                 timeText = `${time} 分鐘`;
         //             }
-        //         });
+        //         }
         //     });
+        // });
         renderData += `<li class="list-group-item d-flex align-items-center ">
                         <div class="d-flex">
                         <p class="timeColor border rounded-pill px-2 me-2 mb-0 bg-light">${timeText}</p>
@@ -76,6 +82,8 @@ const searchEvent = async () => {
             `;
     });
     renderListData(renderData, isDrivingPositive);
+    renderLastStop += `<span>往<span class="lastStopName">${busStationList.pop().StopName.Zh_tw}</span></span>`;
+    renderLastStopData(renderLastStop, isDrivingPositive);
 };
 
 /**
@@ -122,32 +130,36 @@ const getBusDriveTime = (routeName, isPositive = true) => {
                 const busPositiveData = bus.filter(item => !item.Direction);
                 const busBackData = bus.filter(item => item.Direction);
                 const result = isPositive ? busPositiveData : busBackData;
+                const drivingData = []; //有在跑的公車之車牌號碼
                 resolve(result);
 
                 // 組出返程資料格式
+                console.log(busBackData, 'busBackData');
                 busBackData.forEach(item => {
-                    // const index = backData.map(item => item.plateNumb).indexOf(item.PlateNumb);
-                    // if (index === -1) {
-                    //     // 代表沒找到
-                    //     backData.push({
-                    //         plateNumb: item.PlateNumb, //車牌號碼
-                    //         stops: [
-                    //             {
-                    //                 estimateTime: item.EstimateTime, //到站時間預估(秒)
-                    //                 stopUID: item.StopUID, //站牌唯一識別代碼
-                    //             },
-                    //         ],
-                    //     });
-                    // } else {
-                    //     // 有找到
-                    //     backData[index].stops.push({
-                    //         estimateTime: item.EstimateTime, //到站時間預估(秒)
-                    //         stopUID: item.StopUID, //站牌唯一識別代碼
-                    //     });
-                    // }
+                    const index = drivingData.map(item => item.plateNumb).indexOf(item.PlateNumb);
+                    console.log(item, 'item');
+                    console.log(index, 'index');
+                    if (index === -1) {
+                        // 代表沒找到
+                        drivingData.push({
+                            plateNumb: item.PlateNumb, //車牌號碼
+                            stops: [
+                                {
+                                    estimateTime: item.EstimateTime, //到站時間預估(秒)
+                                    stopUID: item.StopUID, //站牌唯一識別代碼
+                                },
+                            ],
+                        });
+                    } else {
+                        // 有找到
+                        drivingData[index].stops.push({
+                            estimateTime: item.EstimateTime, //到站時間預估(秒)
+                            stopUID: item.StopUID, //站牌唯一識別代碼
+                        });
+                    }
                 });
-                // console.log('backData', backData);
-                // getBackRoute();
+                console.log('drivingData', drivingData);
+                //有在跑的公車
             })
             .catch(error => reject('error', error));
     });
@@ -165,4 +177,12 @@ const renderListData = (renderData, isPositive = true) => {
     isPositive
         ? (document.getElementById('goList').innerHTML = renderData)
         : (document.getElementById('backList').innerHTML = renderData);
+};
+
+const renderLastStopData = (renderLastStop, isPositive = true) => {
+    document.getElementById('go-tab').innerHTML = '';
+    document.getElementById('back-tab').innerHTML = '';
+    isPositive
+        ? (document.getElementById('go-tab').innerHTML = renderLastStop)
+        : (document.getElementById('back-tab').innerHTML = renderLastStop);
 };
