@@ -134,22 +134,23 @@ const getBusDriveTime = (routeName, isPositive = true) => {
             headers: GetAuthorizationHeader(),
         })
             .then(response => {
-                // 篩出有在跑的公車
-                const bus = response.data.filter(item => item.PlateNumb);
-                const busPositiveData = bus.filter(item => !item.Direction);
-                const busBackData = bus.filter(item => item.Direction);
-                const result = isPositive ? busPositiveData : busBackData;
-                const drivingData = []; //有在跑的公車之車牌號碼
-                resolve(result);
+                // 過濾公車資料
+                const filterBusData = response.data
+                    // 取得完全符合路線名稱的公車資料（避免API有模糊查詢結果，例如 155、155副）
+                    .filter(item => item.RouteName.Zh_tw === routeName)
+                    // 取得目前有在跑的公車（PlateNumb 若有值，即表示該公車目前正在路上）
+                    .filter(item => item.PlateNumb !== '')
+                    // 取得正反方向的公車資料（Direction 0 表示去程、 1 表示回程）
+                    .filter(item => (isPositive ? item.Direction === 0 : item.Direction === 1));
 
-                // 組出返程資料格式
-                console.log(busBackData, 'busBackData');
-                busBackData.forEach(item => {
+                // 重新整理資料為以車牌為主要鍵值的集合
+                const drivingData = [];
+                filterBusData.forEach(item => {
+                    // 判斷回傳資料是否已存在該車牌資料
                     const index = drivingData.map(item => item.plateNumb).indexOf(item.PlateNumb);
-                    console.log(item, 'item');
-                    console.log(index, 'index');
+
+                    // 未存在車牌資料
                     if (index === -1) {
-                        // 代表沒找到
                         drivingData.push({
                             plateNumb: item.PlateNumb, //車牌號碼
                             stops: [
@@ -160,15 +161,14 @@ const getBusDriveTime = (routeName, isPositive = true) => {
                             ],
                         });
                     } else {
-                        // 有找到
+                        // 已存在車牌，即新增站別資料
                         drivingData[index].stops.push({
                             estimateTime: item.EstimateTime, //到站時間預估(秒)
                             stopUID: item.StopUID, //站牌唯一識別代碼
                         });
                     }
                 });
-                console.log('drivingData', drivingData);
-                //有在跑的公車
+                resolve(drivingData);
             })
             .catch(error => reject('error', error));
     });
@@ -217,7 +217,6 @@ const renderBusRoute = busStationList => {
     });
     geometryTitle += '))';
     polyLine(geometryTitle);
-    console.log(geometryTitle);
 };
 
 /*
@@ -231,7 +230,6 @@ const setMarker = ({ latitude, longitude }) => {
     const marker = L.marker([latitude, longitude], { icon: myIcon }).addTo(map);
     // .bindPopup(message);
     markers.push(marker);
-    // console.log(markers, 'markers');
 };
 
 /**
