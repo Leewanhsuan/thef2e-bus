@@ -11,6 +11,7 @@ import 'regenerator-runtime/runtime';
 let map;
 const markers = [];
 const routers = [];
+const busMarkers = [];
 
 window.addEventListener('load', () => {
     initialMapData();
@@ -56,34 +57,35 @@ const searchEvent = async () => {
     let renderLastStop = '';
     let timeText = '';
     busStationList.forEach(item => {
-        // console.log(item, 'item');
-        // busDrivingTime.forEach(back => {
-        //     console.log(back, 'back');
-        //     Object.entries(back).forEach(stop => {
-        //         console.log(stop, 'stop');
-        //         if (stop.StopUID === item.StopUID) {
-        //             const busID = back.PlateNumb;
-        //             console.log(stop.EstimateTime, 'stopTime');
-        //             const time = Math.floor(stop.EstimateTime / 60);
-        //             console.log(busID, time, '公車車牌與時間');
-        //             if (time === 0) {
-        //                 timeText = '進站中';
-        //             } else if (time <= 1 && 0 < time) {
-        //                 timeText = '即將到站';
-        //             } else if (!time) {
-        //                 timeText = '--';
-        //             } else {
-        //                 timeText = `${time} 分鐘`;
-        //             }
-        //         }
-        //     });
-        // });
-        renderData += `<li class="list-group-item d-flex align-items-center ">
-                        <div class="d-flex">
+        let timeText = '未發車';
+        let busId = '';
+        busDrivingTime.forEach(bus => {
+            bus.stops.forEach(stop => {
+                if (stop.stopUID === item.StopUID) {
+                    console.log(stop, bus);
+                    busId = bus.plateNumb;
+                    const time = Math.floor(stop.estimateTime / 60);
+                    console.log(busId, time, '公車車牌與時間');
+                    if (time === 0) {
+                        timeText = `${busId} 進站中`;
+                    } else if (time <= 1 && 0 < time) {
+                        timeText = `${busId} 即將到站`;
+                        // renderMovingBusMarker();
+                    } else if (!time) {
+                        timeText = '未發車';
+                    } else {
+                        timeText = `${time} 分鐘`;
+                    }
+                }
+            });
+        });
+        renderData += `
+                <li class="list-group-item d-flex align-items-center ">
+                    <div class="d-flex">
                         <p class="timeColor border rounded-pill px-2 me-2 mb-0 bg-light">${timeText}</p>
                         <h5 class="fs-6 mb-0">${item.StopName.Zh_tw}</h5>
-                        </div>
-                    </li>
+                    </div>
+                </li>
             `;
     });
     renderMarker(busStationList);
@@ -207,6 +209,17 @@ const renderMarker = busStationList => {
 };
 
 /*
+ * 取得動態公車經緯度
+ */
+
+const renderMovingBusMarker = busMovingList => {
+    busMovingList.forEach(item => {
+        const [latitude, longitude] = [item.StopPosition.PositionLat, item.StopPosition.PositionLon];
+        setMovingBusMarker({ latitude: latitude, longitude: longitude });
+    });
+};
+
+/*
  * 設定公車路線
  */
 const renderBusRoute = busStationList => {
@@ -230,6 +243,17 @@ const setMarker = ({ latitude, longitude }) => {
     const marker = L.marker([latitude, longitude], { icon: myIcon }).addTo(map);
     // .bindPopup(message);
     markers.push(marker);
+};
+
+/*
+ * 標記公車
+ */
+const setMovingBusMarker = ({ latitude, longitude }) => {
+    const myIcon = L.icon({
+        iconUrl: 'src/image/Taichungbus.png',
+    });
+    const busMarker = L.marker([latitude, longitude], { icon: myIcon }).addTo(map);
+    busMarkers.push(busMarker);
 };
 
 /**
